@@ -4,6 +4,7 @@ import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.nutz.json.ToJson;
 import org.nutz.log.Log;
 
 import java.util.concurrent.*;
@@ -246,5 +247,36 @@ public class SimpleThreadPoolTest {
 
 
 		executor.awaitTermination(1, TimeUnit.SECONDS);
+	}
+
+
+	@Test
+	public void testThreadFactory() throws Exception {
+
+
+		class MyThreadFacotry implements ThreadFactory{
+
+
+			@Override
+			public Thread newThread(Runnable r) {
+				logger.info("new thread for job: " + r.toString());
+				return new Thread(r);
+			}
+		}
+
+		ThreadPoolExecutor threadPool =(ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+
+		threadPool.setThreadFactory(new MyThreadFacotry());
+
+		threadPool.submit(new Runnable() {
+			@Override
+			public void run() {
+				logger.info("running");
+			}
+		});
+
+		threadPool.awaitTermination(1, TimeUnit.SECONDS);
+
+
 	}
 }
