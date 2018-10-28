@@ -4,7 +4,6 @@ import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.nutz.ioc.loader.annotation.IocBean;
 import org.nutz.log.Log;
 
 import java.util.concurrent.*;
@@ -189,16 +188,63 @@ public class SimpleThreadPoolTest {
 	}
 
 
+	@Test(expected = RejectedExecutionException.class)
+	public void testThreadPoolRejection() throws Exception {
 
 
+		runWithRejectionPolicy(new ThreadPoolExecutor.AbortPolicy());
+
+	}
+
+	@Test
+	public void testThreadPoolRejectionCallerRun() throws Exception {
 
 
+		runWithRejectionPolicy(new ThreadPoolExecutor.CallerRunsPolicy());
+
+	}
+	private void runWithRejectionPolicy(RejectedExecutionHandler rejectedExecutionHandler) throws InterruptedException {
+		ThreadPoolExecutor executor = new ThreadPoolExecutor(
+				1,
+				1,
+				0,
+				TimeUnit.SECONDS,
+				new ArrayBlockingQueue<Runnable>(1));
 
 
+		executor.setRejectedExecutionHandler(rejectedExecutionHandler); // default
+		// 第一个任务交给核心线程
+		executor.submit(new Runnable() {
+			@Override
+			public void run() {
 
 
+				logger.info("first task run");
+			}
+		});
 
 
+		// 第二个任务放在等待队列中
+		executor.submit(new Runnable() {
+			@Override
+			public void run() {
 
 
+				logger.info("second task run");
+			}
+		});
+
+		// 第三个任务被抛弃
+		executor.submit(new Runnable() {
+			@Override
+			public void run() {
+
+
+				logger.info("third task run");
+			}
+		});
+
+
+		executor.awaitTermination(1, TimeUnit.SECONDS);
+	}
 }
